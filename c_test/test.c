@@ -14,12 +14,16 @@
 #define MAX_DATA		1024
 
 
-int main() 
+int main(int argc, char **argv) 
 {
-	int sock, cli, sent;
+	int sock, sent;
+	int new;
+	int data_len;
+	int sockaddr_len = sizeof(struct sockaddr_in);
 	struct sockaddr_in server, client;
 	unsigned int len;
-	char mesg[] = "hello world/!";
+//	char mesg[] = "hello world/!";
+	char data[MAX_DATA];
 
 	if((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
@@ -31,7 +35,8 @@ int main()
 
 
 	server.sin_family = AF_INET;
-	server.sin_port = htons(10000);
+	//server.sin_port = htons(10000);
+	server.sin_port = htons(atoi(argv[1]));
 	server.sin_addr.s_addr = INADDR_ANY;
 	//bzero()
 	memset(&server.sin_zero, 0, sizeof(server.sin_zero));
@@ -55,20 +60,37 @@ int main()
 	}
 
 
-	while(1)
+	while(1) //better signal handling required.
 	{
 
 
-		if((cli = accept(sock, (struct sockaddr *)&client, &len)) == -1)
+		if((new = accept(sock, (struct sockaddr *)&client, &len)) == -1)
 		{
 			perror("accept");
 			exit(-1);
 		}
 
-		sent = send(cli, mesg, strlen(mesg), 0);
-		printf("Sent %d bytes to client : %s\n", sent, inet_ntoa(client.sin_addr));
+		printf("new client connected from port no %d and IP %s\n",ntohs(client.sin_port), inet_ntoa(client.sin_addr));
+		data_len = 1;
 
-		close(cli);
+		while(data_len)
+		{
+			data_len = recv(new, data, MAX_DATA, 0);
+
+			if(data_len)
+			{
+				 send(new, data, data_len, 0);
+				 data[data_len] = '\0';
+				 printf("sent mesg: %s", data);
+			}
+
+
+		}
+
+		//sent = send(new, mesg, strlen(mesg), 0);
+		//printf("Sent %d bytes to client : %s\n", sent, inet_ntoa(client.sin_addr));
+		printf("client disconnected\n")
+		close(new);
 	}
 
 
