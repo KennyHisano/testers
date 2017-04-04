@@ -3,13 +3,23 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
-main() 
+
+#define ERROR	-1
+#define MAX_CLIENTS		2
+#define MAX_DATA		1024
+
+
+int main() 
 {
-	int sock cli;
+	int sock, cli, sent;
 	struct sockaddr_in server, client;
-	int len;
+	unsigned int len;
+	char mesg[] = "hello world/!";
 
 	if((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
@@ -49,11 +59,19 @@ main()
 	{
 
 
-		if((cli = accept())
+		if((cli = accept(sock, (struct sockaddr *)&client, &len)) == -1)
+		{
+			perror("accept");
+			exit(-1);
+		}
 
+		sent = send(cli, mesg, strlen(mesg), 0);
+		printf("Sent %d bytes to client : %s\n", sent, inet_ntoa(client.sin_addr));
 
-
+		close(cli);
 	}
 
 
+
 }
+
